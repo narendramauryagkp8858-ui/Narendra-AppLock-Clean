@@ -1,3 +1,4 @@
+
 package com.narendra.applock;
 
 import android.app.Activity;
@@ -31,6 +32,9 @@ public class MainActivity extends Activity {
         Button lockButton = new Button(this);
         lockButton.setText("APP LOCK");
 
+        Button usageButton = new Button(this);
+        usageButton.setText("USAGE ACCESS");
+
         Button vaultButton = new Button(this);
         vaultButton.setText("PHOTO & VIDEO VAULT");
 
@@ -39,6 +43,7 @@ public class MainActivity extends Activity {
 
         layout.addView(title);
         layout.addView(lockButton);
+        layout.addView(usageButton);
         layout.addView(vaultButton);
         layout.addView(changePinButton);
 
@@ -52,10 +57,20 @@ public class MainActivity extends Activity {
             startActivity(intent);
         });
 
+        usageButton.setOnClickListener(v -> {
+            Intent intent = new Intent(
+                MainActivity.this,
+                UsageAccessActivity.class
+            );
+            startActivity(intent);
+        });
+
         vaultButton.setOnClickListener(v ->
-            Toast.makeText(this,
+            Toast.makeText(
+                this,
                 "Vault feature will be added next.",
-                Toast.LENGTH_SHORT).show()
+                Toast.LENGTH_SHORT
+            ).show()
         );
 
         changePinButton.setOnClickListener(v -> {
