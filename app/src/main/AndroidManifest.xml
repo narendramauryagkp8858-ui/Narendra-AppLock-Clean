@@ -24,3 +24,6 @@
 
     </application>
 </manifest>
+<activity
+    android:name=".ChangePinActivity"
+    android:exported="false" />
