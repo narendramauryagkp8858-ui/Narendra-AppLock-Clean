@@ -63,8 +63,8 @@ public class VaultCrypto {
 
         byte[] iv = cipher.getIV();
 
-        try (OutputStream fileOutput =
-                     new FileOutputStream(destination)) {
+        try (InputStream source = input;
+             OutputStream fileOutput = new FileOutputStream(destination)) {
 
             fileOutput.write(iv);
 
@@ -74,20 +74,19 @@ public class VaultCrypto {
                 byte[] buffer = new byte[8192];
                 int length;
 
-                while ((length = input.read(buffer)) != -1) {
+                while ((length = source.read(buffer)) != -1) {
                     encrypted.write(buffer, 0, length);
                 }
             }
-        } finally {
-            input.close();
         }
     }
 
     public static InputStream decrypt(File source)
             throws Exception {
 
-        try (FileInputStream input = new FileInputStream(source)) {
+        FileInputStream input = new FileInputStream(source);
 
+        try {
             byte[] iv = new byte[12];
             int offset = 0;
 
@@ -109,10 +108,11 @@ public class VaultCrypto {
                     new GCMParameterSpec(128, iv)
             );
 
-            return new CipherInputStream(
-                    new FileInputStream(source),
-                    cipher
-            );
+            return new CipherInputStream(input, cipher);
+
+        } catch (Exception e) {
+            input.close();
+            throw e;
         }
     }
 }
