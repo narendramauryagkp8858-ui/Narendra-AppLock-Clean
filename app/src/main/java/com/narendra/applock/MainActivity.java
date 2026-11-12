@@ -49,15 +49,19 @@ public class MainActivity extends Activity {
         setContentView(layout);
 
         lockButton.setOnClickListener(v ->
-            startActivity(new Intent(this, AppLockActivity.class)));
+            startActivity(new Intent(this, AppLockActivity.class))
+        );
 
         usageButton.setOnClickListener(v ->
-            startActivity(new Intent(this, UsageAccessActivity.class)));
+            startActivity(new Intent(this, UsageAccessActivity.class))
+        );
 
         vaultButton.setOnClickListener(v ->
-            startActivity(new Intent(this, VaultActivity.class)));
+            startActivity(new Intent(this, VaultActivity.class))
+        );
 
         changePinButton.setOnClickListener(v ->
-            startActivity(new Intent(this, ChangePinActivity.class)));
+            startActivity(new Intent(this, ChangePinActivity.class))
+        );
     }
 }
