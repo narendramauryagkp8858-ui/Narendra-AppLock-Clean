@@ -5,12 +5,14 @@ import android.app.Service;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Intent;
-import android.os.IBinder;
+import android.content.SharedPreferences;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
-import android.content.Context;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AppMonitorService extends Service {
 
@@ -36,20 +38,20 @@ public class AppMonitorService extends Service {
     }
 
     private void checkRunningApp() {
+
         UsageStatsManager manager =
-            (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
+            (UsageStatsManager) getSystemService(USAGE_STATS_SERVICE);
 
         if (manager == null) return;
 
         long end = System.currentTimeMillis();
         long start = end - 10000;
 
-        List<UsageStats> stats =
-            manager.queryUsageStats(
-                UsageStatsManager.INTERVAL_DAILY,
-                start,
-                end
-            );
+        List<UsageStats> stats = manager.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY,
+            start,
+            end
+        );
 
         if (stats == null || stats.isEmpty()) return;
 
@@ -66,13 +68,32 @@ public class AppMonitorService extends Service {
 
         String packageName = recent.getPackageName();
 
-        if (packageName.equals(getPackageName())) {
-            return;
-        }
+        if (packageName.equals(getPackageName())) return;
 
         if (packageName.equals(lastPackage)) return;
 
         lastPackage = packageName;
+
+        SharedPreferences preferences =
+            getSharedPreferences("narendra_applock", MODE_PRIVATE);
+
+        Set<String> lockedApps = preferences.getStringSet(
+            "locked_apps",
+            new HashSet<String>()
+        );
+
+        if (lockedApps == null ||
+            !lockedApps.contains(packageName)) {
+            return;
+        }
+
+        Intent lockIntent =
+            new Intent(this, LockScreenActivity.class);
+
+        lockIntent.putExtra("target_package", packageName);
+        lockIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        startActivity(lockIntent);
     }
 
     @Override
