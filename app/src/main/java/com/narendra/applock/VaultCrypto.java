@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.IOException;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
@@ -17,17 +18,15 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
+import java.security.KeyStore;
+
 public class VaultCrypto {
 
     private static final String KEY_ALIAS = "NarendraVaultKey";
     private static final String ANDROID_KEYSTORE = "AndroidKeyStore";
-    private static final int IV_LENGTH = 12;
 
-    private static SecretKey getSecretKey() throws Exception {
-
-        java.security.KeyStore keyStore =
-                java.security.KeyStore.getInstance(ANDROID_KEYSTORE);
-
+    private static SecretKey getKey() throws Exception {
+        KeyStore keyStore = KeyStore.getInstance(ANDROID_KEYSTORE);
         keyStore.load(null);
 
         if (keyStore.containsAlias(KEY_ALIAS)) {
@@ -39,45 +38,44 @@ public class VaultCrypto {
                 ANDROID_KEYSTORE
         );
 
-        generator.init(
-                new KeyGenParameterSpec.Builder(
-                        KEY_ALIAS,
-                        KeyProperties.PURPOSE_ENCRYPT |
-                        KeyProperties.PURPOSE_DECRYPT
-                )
+        generator.init(new KeyGenParameterSpec.Builder(
+                KEY_ALIAS,
+                KeyProperties.PURPOSE_ENCRYPT |
+                KeyProperties.PURPOSE_DECRYPT
+        )
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(
                         KeyProperties.ENCRYPTION_PADDING_NONE
                 )
                 .setRandomizedEncryptionRequired(true)
-                .build()
-        );
+                .build());
 
         return generator.generateKey();
     }
 
-    public static void encrypt(InputStream input, File outputFile)
-            throws Exception {
+    public static void encrypt(
+            InputStream input,
+            File destination
+    ) throws Exception {
 
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-
-        cipher.init(Cipher.ENCRYPT_MODE, getSecretKey());
+        cipher.init(Cipher.ENCRYPT_MODE, getKey());
 
         byte[] iv = cipher.getIV();
 
-        try (FileOutputStream fileOutput =
-                     new FileOutputStream(outputFile)) {
+        try (OutputStream fileOutput =
+                     new FileOutputStream(destination)) {
 
             fileOutput.write(iv);
 
-            try (CipherOutputStream encryptedOutput =
+            try (CipherOutputStream encrypted =
                          new CipherOutputStream(fileOutput, cipher)) {
 
                 byte[] buffer = new byte[8192];
-                int count;
+                int length;
 
-                while ((count = input.read(buffer)) != -1) {
-                    encryptedOutput.write(buffer, 0, count);
+                while ((length = input.read(buffer)) != -1) {
+                    encrypted.write(buffer, 0, length);
                 }
             }
         } finally {
@@ -85,28 +83,36 @@ public class VaultCrypto {
         }
     }
 
-    public static InputStream decrypt(File encryptedFile)
+    public static InputStream decrypt(File source)
             throws Exception {
 
-        FileInputStream input = new FileInputStream(encryptedFile);
+        try (FileInputStream input = new FileInputStream(source)) {
 
-        byte[] iv = new byte[IV_LENGTH];
+            byte[] iv = new byte[12];
+            int offset = 0;
 
-        int read = input.read(iv);
+            while (offset < iv.length) {
+                int count = input.read(iv, offset, iv.length - offset);
 
-        if (read != IV_LENGTH) {
-            input.close();
-            throw new Exception("Invalid encrypted file");
+                if (count == -1) {
+                    throw new IOException("Invalid encrypted file");
+                }
+
+                offset += count;
+            }
+
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+
+            cipher.init(
+                    Cipher.DECRYPT_MODE,
+                    getKey(),
+                    new GCMParameterSpec(128, iv)
+            );
+
+            return new CipherInputStream(
+                    new FileInputStream(source),
+                    cipher
+            );
         }
-
-        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-
-        cipher.init(
-                Cipher.DECRYPT_MODE,
-                getSecretKey(),
-                new GCMParameterSpec(128, iv)
-        );
-
-        return new CipherInputStream(input, cipher);
     }
 }
