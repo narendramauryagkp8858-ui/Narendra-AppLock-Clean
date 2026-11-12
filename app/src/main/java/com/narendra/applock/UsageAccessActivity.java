@@ -16,6 +16,8 @@ import android.widget.Toast;
 
 public class UsageAccessActivity extends Activity {
 
+    private TextView statusText;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,31 +33,62 @@ public class UsageAccessActivity extends Activity {
         title.setTextSize(24);
         title.setTextColor(Color.WHITE);
 
-        TextView info = new TextView(this);
-        info.setText(
-            "Allow Narendra AppLock to see which app is currently being used."
-        );
-        info.setTextColor(Color.LTGRAY);
-        info.setGravity(Gravity.CENTER);
+        statusText = new TextView(this);
+        statusText.setTextColor(Color.LTGRAY);
+        statusText.setGravity(Gravity.CENTER);
+        statusText.setText("Check permission status below.");
 
         Button permissionButton = new Button(this);
         permissionButton.setText("OPEN USAGE ACCESS SETTINGS");
 
+        Button startButton = new Button(this);
+        startButton.setText("START MONITORING");
+
         layout.addView(title);
-        layout.addView(info);
+        layout.addView(statusText);
         layout.addView(permissionButton);
+        layout.addView(startButton);
 
         setContentView(layout);
 
         permissionButton.setOnClickListener(v -> {
-            Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+            Intent intent = new Intent(
+                Settings.ACTION_USAGE_ACCESS_SETTINGS
+            );
             startActivity(intent);
+        });
+
+        startButton.setOnClickListener(v -> {
+            if (hasUsagePermission()) {
+                Intent serviceIntent =
+                    new Intent(this, AppMonitorService.class);
+
+                startService(serviceIntent);
+
+                statusText.setText("Monitoring service started.");
+                Toast.makeText(
+                    this,
+                    "Monitoring started",
+                    Toast.LENGTH_SHORT
+                ).show();
+            } else {
+                Toast.makeText(
+                    this,
+                    "Please allow Usage Access first.",
+                    Toast.LENGTH_LONG
+                ).show();
+                startActivity(
+                    new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                );
+            }
         });
     }
 
     private boolean hasUsagePermission() {
         AppOpsManager appOps =
             (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+
+        if (appOps == null) return false;
 
         int mode = appOps.checkOpNoThrow(
             AppOpsManager.OPSTR_GET_USAGE_STATS,
@@ -70,12 +103,12 @@ public class UsageAccessActivity extends Activity {
     protected void onResume() {
         super.onResume();
 
-        if (hasUsagePermission()) {
-            Toast.makeText(
-                this,
-                "Usage Access permission granted",
-                Toast.LENGTH_SHORT
-            ).show();
+        if (statusText != null) {
+            if (hasUsagePermission()) {
+                statusText.setText("Usage Access: Permission granted");
+            } else {
+                statusText.setText("Usage Access: Permission not granted");
+            }
         }
     }
 }
