@@ -9,7 +9,6 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.content.Intent;
-import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
@@ -49,36 +48,16 @@ public class MainActivity extends Activity {
 
         setContentView(layout);
 
-        lockButton.setOnClickListener(v -> {
-            Intent intent = new Intent(
-                MainActivity.this,
-                AppLockActivity.class
-            );
-            startActivity(intent);
-        });
+        lockButton.setOnClickListener(v ->
+            startActivity(new Intent(this, AppLockActivity.class)));
 
-        usageButton.setOnClickListener(v -> {
-            Intent intent = new Intent(
-                MainActivity.this,
-                UsageAccessActivity.class
-            );
-            startActivity(intent);
-        });
+        usageButton.setOnClickListener(v ->
+            startActivity(new Intent(this, UsageAccessActivity.class)));
 
         vaultButton.setOnClickListener(v ->
-            Toast.makeText(
-                this,
-                "Vault feature will be added next.",
-                Toast.LENGTH_SHORT
-            ).show()
-        );
+            startActivity(new Intent(this, VaultActivity.class)));
 
-        changePinButton.setOnClickListener(v -> {
-            Intent intent = new Intent(
-                MainActivity.this,
-                ChangePinActivity.class
-            );
-            startActivity(intent);
-        });
+        changePinButton.setOnClickListener(v ->
+            startActivity(new Intent(this, ChangePinActivity.class)));
     }
 }
