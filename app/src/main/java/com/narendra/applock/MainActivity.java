@@ -44,15 +44,17 @@ public class MainActivity extends Activity {
 
         setContentView(layout);
 
-        lockButton.setOnClickListener(v ->
-            Toast.makeText(this,
-                "App Lock feature is coming next.",
-                Toast.LENGTH_SHORT).show()
-        );
+        lockButton.setOnClickListener(v -> {
+            Intent intent = new Intent(
+                MainActivity.this,
+                AppLockActivity.class
+            );
+            startActivity(intent);
+        });
 
         vaultButton.setOnClickListener(v ->
             Toast.makeText(this,
-                "Photo and Video Vault is coming next.",
+                "Vault feature will be added next.",
                 Toast.LENGTH_SHORT).show()
         );
 
