@@ -13,8 +13,6 @@ import android.widget.Toast;
 
 public class PinActivity extends Activity {
 
-    private final String DEFAULT_PIN = "8546";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,11 +45,14 @@ public class PinActivity extends Activity {
         setContentView(layout);
 
         unlockButton.setOnClickListener(v -> {
-            if (DEFAULT_PIN.equals(pinInput.getText().toString())) {
+            String enteredPin = pinInput.getText().toString();
+
+            if (PinStore.checkPin(this, enteredPin)) {
                 startActivity(new Intent(this, MainActivity.class));
                 finish();
             } else {
-                Toast.makeText(this, "Wrong PIN", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Wrong PIN",
+                    Toast.LENGTH_SHORT).show();
             }
         });
     }
