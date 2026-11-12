@@ -16,7 +16,6 @@ import android.provider.OpenableColumns;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.FileOutputStream;
 
 public class VaultActivity extends Activity {
 
@@ -83,91 +82,62 @@ public class VaultActivity extends Activity {
             Uri uri = data.getData();
 
             if (uri != null) {
-                saveFile(uri);
+                saveEncryptedFile(uri);
             }
         }
     }
 
-    private void saveFile(Uri uri) {
+    private void saveEncryptedFile(Uri uri) {
+        File destination = null;
+
         try {
             String mime = getContentResolver().getType(uri);
 
             if (mime == null ||
                     (!mime.startsWith("image/") &&
                      !mime.startsWith("video/"))) {
-                Toast.makeText(this, "Only photos and videos allowed",
+                Toast.makeText(this,
+                        "Only photos and videos allowed",
                         Toast.LENGTH_LONG).show();
                 return;
             }
 
-            String name = getFileName(uri);
-            String extension = name.contains(".")
-                    ? name.substring(name.lastIndexOf("."))
-                    : "";
-
             File folder = new File(getFilesDir(), "vault");
 
-            if (!folder.exists()) {
-                folder.mkdirs();
+            if (!folder.exists() && !folder.mkdirs()) {
+                throw new Exception("Cannot create vault folder");
             }
 
-            File destination = new File(
+            destination = new File(
                     folder,
-                    "vault_" + System.currentTimeMillis() + extension
+                    "vault_" + System.currentTimeMillis() + ".nrv"
             );
 
-            InputStream input = getContentResolver()
-                    .openInputStream(uri);
+            InputStream input =
+                    getContentResolver().openInputStream(uri);
 
             if (input == null) {
                 throw new Exception("Cannot open selected file");
             }
 
-            FileOutputStream output = new FileOutputStream(destination);
+            VaultCrypto.encrypt(input, destination);
 
-            byte[] buffer = new byte[8192];
-            int length;
-
-            while ((length = input.read(buffer)) > 0) {
-                output.write(buffer, 0, length);
-            }
-
-            input.close();
-            output.close();
-
-            Toast.makeText(this, "File saved in private vault",
+            Toast.makeText(this,
+                    "Encrypted file saved successfully",
                     Toast.LENGTH_LONG).show();
 
             showVaultFiles();
 
         } catch (Exception e) {
-            Toast.makeText(this, "Error: " + e.getMessage(),
+
+            if (destination != null && destination.exists()) {
+                destination.delete();
+            }
+
+            Toast.makeText(this,
+                    "Vault Error: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
-    }
-
-    private String getFileName(Uri uri) {
-        String name = "private_file";
-
-        Cursor cursor = getContentResolver().query(
-                uri, null, null, null, null);
-
-        if (cursor != null) {
-            try {
-                if (cursor.moveToFirst()) {
-                    int index = cursor.getColumnIndex(
-                            OpenableColumns.DISPLAY_NAME);
-
-                    if (index >= 0) {
-                        name = cursor.getString(index);
-                    }
-                }
-            } finally {
-                cursor.close();
-            }
-        }
-
-        return name;
     }
 
     private void showVaultFiles() {
@@ -186,12 +156,22 @@ public class VaultActivity extends Activity {
         }
 
         StringBuilder list = new StringBuilder();
-        list.append("SAVED PRIVATE FILES\n\n");
+        list.append("ENCRYPTED PRIVATE FILES\n\n");
+
+        int count = 0;
 
         for (File file : files) {
-            list.append("• ")
-                .append(file.getName())
-                .append("\n\n");
+            if (file.isFile() && file.getName().endsWith(".nrv")) {
+                count++;
+                list.append(count)
+                    .append(". Secure file ")
+                    .append(count)
+                    .append("\n\n");
+            }
+        }
+
+        if (count == 0) {
+            list.append("Your vault is empty.");
         }
 
         fileList.setText(list.toString());
