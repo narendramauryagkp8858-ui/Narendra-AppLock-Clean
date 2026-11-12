@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.content.Intent;
+import android.widget.Toast;
 
 public class MainActivity extends Activity {
 
@@ -44,21 +45,23 @@ public class MainActivity extends Activity {
         setContentView(layout);
 
         lockButton.setOnClickListener(v ->
-            android.widget.Toast.makeText(this,
-                "App Lock feature will be added next.",
-                android.widget.Toast.LENGTH_SHORT).show()
+            Toast.makeText(this,
+                "App Lock feature is coming next.",
+                Toast.LENGTH_SHORT).show()
         );
 
         vaultButton.setOnClickListener(v ->
-            android.widget.Toast.makeText(this,
-                "Vault feature will be added next.",
-                android.widget.Toast.LENGTH_SHORT).show()
+            Toast.makeText(this,
+                "Photo and Video Vault is coming next.",
+                Toast.LENGTH_SHORT).show()
         );
 
-        changePinButton.setOnClickListener(v ->
-            android.widget.Toast.makeText(this,
-                "Change PIN feature will be added next.",
-                android.widget.Toast.LENGTH_SHORT).show()
-        );
+        changePinButton.setOnClickListener(v -> {
+            Intent intent = new Intent(
+                MainActivity.this,
+                ChangePinActivity.class
+            );
+            startActivity(intent);
+        });
     }
 }
