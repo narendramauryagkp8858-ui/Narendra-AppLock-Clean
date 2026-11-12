@@ -2,17 +2,18 @@
 package com.narendra.applock;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.content.Intent;
 import android.net.Uri;
 import android.graphics.Color;
+import android.text.InputType;
 import android.view.Gravity;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.database.Cursor;
-import android.provider.OpenableColumns;
 
 import java.io.File;
 import java.io.InputStream;
@@ -27,6 +28,45 @@ public class VaultActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        showPinDialog();
+    }
+
+    private void showPinDialog() {
+        EditText pinInput = new EditText(this);
+        pinInput.setInputType(
+                InputType.TYPE_CLASS_NUMBER |
+                InputType.TYPE_NUMBER_VARIATION_PASSWORD
+        );
+        pinInput.setHint("Enter your PIN");
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Narendra Private Vault")
+                .setMessage("Enter PIN to open Vault")
+                .setView(pinInput)
+                .setCancelable(false)
+                .setPositiveButton("UNLOCK", null)
+                .setNegativeButton("CANCEL", (d, w) -> finish())
+                .create();
+
+        dialog.setOnShowListener(d -> {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                    .setOnClickListener(v -> {
+                        String pin = pinInput.getText().toString();
+
+                        if (PinStore.checkPin(this, pin)) {
+                            dialog.dismiss();
+                            showVaultScreen();
+                        } else {
+                            pinInput.setText("");
+                            pinInput.setError("Wrong PIN");
+                        }
+                    });
+        });
+
+        dialog.show();
+    }
+
+    private void showVaultScreen() {
 
         layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
