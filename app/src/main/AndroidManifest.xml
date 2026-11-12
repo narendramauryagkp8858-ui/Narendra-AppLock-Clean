@@ -16,6 +16,11 @@
         android:supportsRtl="true">
 
         <activity
+            android:name=".LockScreenActivity"
+            android:exported="false"
+            android:excludeFromRecents="true" />
+
+        <activity
             android:name=".AppLockActivity"
             android:exported="false" />
 
@@ -37,6 +42,10 @@
             </intent-filter>
 
         </activity>
+
+        <service
+            android:name=".AppMonitorService"
+            android:exported="false" />
 
     </application>
 
